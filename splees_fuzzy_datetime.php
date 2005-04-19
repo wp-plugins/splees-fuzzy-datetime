@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Fuzzy DateTime
-Plugin URI: http://www.splee.co.uk/
+Plugin URI: http://www.splee.co.uk/category/fuzzydate-plugin/
 Description: Prints a fuzzy date and time, similar to the KDE clock.
 Version: 0.5
 Author: Splee
