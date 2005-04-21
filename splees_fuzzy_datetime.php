@@ -98,7 +98,6 @@ function splees_fuzzy_datetime() {
 
 	$outString = str_replace($rewritecode, $rewritereplace, $lm_fdt_options[$fuzzyMode]);
 	
-	//$outString = lm_calc_fuzzy_string($postStamp, $nowStamp, $lm_fdt_options[$fuzzyMode]);
 	//now print the fuzzy datetime.
 	print $outString;
 }
