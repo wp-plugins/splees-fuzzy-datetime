@@ -3,7 +3,7 @@
 Plugin Name: Fuzzy DateTime
 Plugin URI: http://www.splee.co.uk/category/fuzzydate-plugin/
 Description: Prints a fuzzy date and time, similar to the KDE clock.
-Version: 0.5
+Version: 0.6
 Author: Splee
 Author URI: http://www.splee.co.uk
 */
@@ -30,6 +30,22 @@ This plugin contains code from the Time of Day plugin
 by Phu Ly & Dunstan Orchard & Michael Heilemann (http://www.ifelse.co.uk/code/timeofday.php)
 */
 
+/*
+ChangeLog:
+0.6:	Fixed issue with day/days mode not being detected correctly
+		Code tidy and optimisation
+		
+0.5:	Fixed issues with admin panel not saving options correctly
+
+0.4:	Added admin panel functionality
+
+0.3:	Fixed numerous issues with date calculations
+		Tidied code and added some meaningful comments
+
+0.2:	Too much to list!
+
+0.1:	First implimentation.
+*/
 //ini_set('display_errors', true); //for debugging
 
 // This is the function that needs to replace 'the_time()' in your theme.
@@ -42,49 +58,21 @@ function splees_fuzzy_datetime() {
 	//Get the options from the db
 	$lm_fdt_options = get_option('lm_fdt_options');
 	
-	//reduce the overhead of calculating the difference lots of times in elseif's
+	//Spot the difference...
 	$dayDifference = (date('z', $nowStamp) - date('z', $postStamp));
 	$monthDifference = (date('n', $nowStamp) - date('n', $postStamp));
 	$yearDifference = (date('Y', $nowStamp) - date('Y', $postStamp));
 	
-	if ($yearDifference > 1) {
-		//the post was made over a year ago
-		$fuzzyMode = "years";
-	} elseif ($yearDifference == 1) {
-		//the post was made last year
-		$fuzzyMode = "year";
-	} elseif ($monthDifference > 1) {
-		//the post was made over a month ago
-		$fuzzyMode = "months";
-	} elseif ($monthDifference == 1) {
-		//the post was made last month
-		$fuzzyMode = "month";
-	} elseif ($dayDifference >= 7) {
-		if ($dayDifference > 14) {
-			//the post was made over a week ago
-			$fuzzyMode = "weeks";
-		} else {
-			//the post was made last week
-			$fuzzyMode = "week";
-		}
-	} elseif ($dayDifference > 1) {
-		//the post was made a few days ago
-		$fuzzyMode = "days";
-	} elseif ($dayDifference == 1) {
-		//the post was made yesterday
-		$fuzzyMode = "yesterday";
-	} elseif ($dayDifference == 0) {
-		//the post was made today
-		$fuzzyMode = "today";
-	}
+	if ($yearDifference > 1) $fuzzyMode = "years";
+	elseif ($yearDifference == 1) $fuzzyMode = "year";
+	elseif ($monthDifference > 1) $fuzzyMode = "months";
+	elseif ($monthDifference == 1) $fuzzyMode = "month";
+	elseif ($dayDifference >= 14) $fuzzyMode = "weeks";
+	elseif ($dayDifference >= 7) $fuzzyMode = "week";
+	elseif ($dayDifference > 1) $fuzzyMode = "days";
+	elseif ($dayDifference == 1) $fuzzyMode = "yesterday";
+	elseif ($dayDifference == 0) $fuzzyMode = "today";
 
-	$outString = lm_calc_fuzzy_string($postStamp, $nowStamp, $lm_fdt_options[$fuzzyMode]);
-	//now print the fuzzy datetime.
-	print $outString;
-}
-
-//This function does most of the legwork
-function lm_calc_fuzzy_string($postStamp, $nowStamp, $fuzzyTemplate) {
 	//these are the strings to be replaced
 	$rewritecode = array(
 		"%minutesSince%",
@@ -104,15 +92,27 @@ function lm_calc_fuzzy_string($postStamp, $nowStamp, $fuzzyTemplate) {
 		"%actualDate%",
 		"%actualTime%"
 		);
+
 	//get the replacements for the above
 	$rewritereplace = lm_get_fuzzy_replacements($postStamp, $nowStamp);
+
+	$outString = str_replace($rewritecode, $rewritereplace, $lm_fdt_options[$fuzzyMode]);
 	
-	//return the reformatted string
-	return str_replace($rewritecode, $rewritereplace, $fuzzyTemplate);
-	
+	//$outString = lm_calc_fuzzy_string($postStamp, $nowStamp, $lm_fdt_options[$fuzzyMode]);
+	//now print the fuzzy datetime.
+	print $outString;
 }
 
-//function calculates all the available replacement options
+
+/* lm_get_fuzzy_replacements:
+	This function must return an array the same length as the
+	$rewriteCode array in splees_fuzzy_datetime()
+	
+	Parameters
+	----------
+	$postStamp: This should be the timestamp of the post
+	$nowStamp: This should be the timestamp for now()
+*/
 function lm_get_fuzzy_replacements($postStamp, $nowStamp) {
 	$difference = ($nowStamp - $postStamp);
 	/*	Must return an array with the results in the following order:
@@ -140,16 +140,20 @@ function lm_get_fuzzy_replacements($postStamp, $nowStamp) {
 	//%hoursSince%
 	$returnValue[1] = floor(($difference/60)/60);
 	//%daysSince%
-	$returnValue[2] = floor((($difference/60)/60)/24);
+	$returnValue[2] = (date('z', $nowStamp) - date('z', $postStamp)); //floor((($difference/60)/60)/24); 
 	//%weeksSince%
 	$returnValue[3] = floor(((($difference/60)/60)/24)/7);
 	//%monthsSince%
 	$returnValue[4] = (date('n', $nowStamp) - date('n', $postStamp));
 	//%yearsSince%
 	$returnValue[5] = (date('Y', $nowStamp) - date('Y', $postStamp));
-		//deal with the inverted %monthsSince% value if %yearsSince% > 0
+		
 		if ($returnValue[5] > 0) {
+			//deal with the inverted %monthsSince% value if %yearsSince% > 0
 			$returnValue[4] = $returnValue[4] * (-1);
+			//Also, the daysSince tag will start to go skewiff when calculated in a different year.
+			//fix this by being semantically less accurate but numerically more accurate.
+			$returnValue[2] = floor(((($difference/60)/60)/24)/7);
 		}
 	//%dayName%
 	$returnValue[6] = date('l', $postStamp);
@@ -249,7 +253,16 @@ function lm_get_fuzzy_replacements($postStamp, $nowStamp) {
 	return $returnValue;
 }
 
-//get the fuzzy 12 hour clock
+/*
+	lm_get_fuzzy12Hour:
+	
+	This function returns a string containing a
+	fuzzy representation of the 12 hour clock.
+	
+	Parameters
+	----------
+	$postStamp: This should be the timestamp of the post
+*/
 function lm_get_fuzzy12Hour($postStamp) {
 	//fuzzify the hour
 	$fuzHours = array(
@@ -282,8 +295,19 @@ function lm_get_fuzzy12Hour($postStamp) {
 	return $returnVal;
 }
 
-//get the fuzzy timetext:
-//based on code from the timeofday plugin by Phu Ly & Dunstan Orchard & Michael Heilemann (http://www.ifelse.co.uk/code/timeofday.php)
+/*
+	lm_get_fuzzyTimeText:
+	Returns a string with a fuzzy representation of the time
+	period from the $postStamp param.
+	
+	*based on code from the timeofday plugin by 
+	Phu Ly & Dunstan Orchard & Michael Heilemann 
+	(http://www.ifelse.co.uk/code/timeofday.php)*
+	
+	Parameters
+	----------
+	$postStamp: This should be the timestamp of the post
+*/
 function lm_get_fuzzyTimeText($postStamp) {
 	switch(date('G', $postStamp))
 		{
@@ -344,10 +368,9 @@ function lm_get_fuzzyTimeText($postStamp) {
 	return $returnVal;
 }
 
-// all the stuff for the options pages ...
-function lm_fdt_add_pages() {
-	add_options_page('Fuzzy DateTime', 'Fuzzy DateTime', 8, basename(__FILE__), 'lm_fdt_options_page');
-}
+/*
+	From here on out we are dealing with the admin GUI.
+*/
 
 function lm_fdt_options_page() {
 	switch($_POST['action']) {
@@ -510,5 +533,9 @@ function lm_fdt_options_page() {
 <?php
 }
 
+/* Add the above pages to the wp-admin GUI */
+function lm_fdt_add_pages() {
+	add_options_page('Fuzzy DateTime', 'Fuzzy DateTime', 8, basename(__FILE__), 'lm_fdt_options_page');
+}
 add_action('admin_menu', 'lm_fdt_add_pages');
 ?>
