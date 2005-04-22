@@ -406,7 +406,7 @@ function lm_fdt_options_page() {
 //the page itself
 ?>
 <div class="wrap">
-<form name="lm_fdt_options" method="post" action="<?php echo $_SERVER[PHP_SELF]; ?>?page=fuzzy_datetime.php">
+<form name="lm_fdt_options" method="post" action="<?php echo $_SERVER[PHP_SELF]; ?>?page=splees_fuzzy_datetime.php">
 <input type="hidden" name="action" value="lm_fdt_update" />
 	<h2>Output Strings</h2>
 	<p>Each of these options configure the output depending on the amount of time passed.  Enter the string using the replacement
