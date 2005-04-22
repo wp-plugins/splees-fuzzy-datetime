@@ -50,13 +50,15 @@ ChangeLog:
 
 // This is the function that needs to replace 'the_time()' in your theme.
 function splees_fuzzy_datetime() {
-	//get the two timestamps
-	$nowStamp = time();
-	$postStamp = strtotime(get_post_time('Y-m-d H:i:s'));
-	$difference = $lm_nowStamp - $lm_postStamp;
-	
 	//Get the options from the db
 	$lm_fdt_options = get_option('lm_fdt_options');
+	$lm_time_offset = get_settings('gmt_offset') * 3600;
+	
+	//get the two timestamps
+	$nowStamp = strtotime(gmdate('Y-m-d H:i:s', time()));
+	$postStamp = strtotime(get_post_time('Y-m-d H:i:s', true));
+	$difference = $lm_nowStamp - $lm_postStamp;
+	
 	
 	//Spot the difference...
 	$dayDifference = (date('z', $nowStamp) - date('z', $postStamp));
