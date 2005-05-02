@@ -68,7 +68,7 @@ function splees_fuzzy_datetime() {
 	if ($yearDifference > 1) $fuzzyMode = "years";
 	elseif ($yearDifference == 1) $fuzzyMode = "year";
 	elseif ($monthDifference > 1) $fuzzyMode = "months";
-	elseif ($monthDifference == 1) $fuzzyMode = "month";
+	elseif (($monthDifference == 1) && ($dayDifference >= 14)) $fuzzyMode = "month";  //Added a two week bias before the post was "last month".
 	elseif ($dayDifference >= 14) $fuzzyMode = "weeks";
 	elseif ($dayDifference >= 7) $fuzzyMode = "week";
 	elseif ($dayDifference > 1) $fuzzyMode = "days";
@@ -96,7 +96,7 @@ function splees_fuzzy_datetime() {
 		);
 
 	//get the replacements for the above
-	$rewritereplace = lm_get_fuzzy_replacements($postStamp, $nowStamp);
+	$rewritereplace = lm_get_fuzzy_replacements(($postStamp + $lm_time_offset), ($nowStamp + $lm_time_offset));
 
 	$outString = str_replace($rewritecode, $rewritereplace, $lm_fdt_options[$fuzzyMode]);
 	
