@@ -32,7 +32,10 @@ by Phu Ly & Dunstan Orchard & Michael Heilemann (http://www.ifelse.co.uk/code/ti
 
 /*
 ChangeLog:
-0.6:	Fixed issue with day/days mode not being detected correctly
+
+		
+0.6:	(02/05/05) - Updated code with fixes for months being detected 'too literally'
+		Fixed issue with day/days mode not being detected correctly
 		Code tidy and optimisation
 		
 0.5:	Fixed issues with admin panel not saving options correctly
