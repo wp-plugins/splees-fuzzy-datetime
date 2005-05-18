@@ -99,7 +99,7 @@ function splees_fuzzy_datetime() {
 		);
 
 	//get the replacements for the above
-	$rewritereplace = lm_get_fuzzy_replacements(($postStamp + $lm_time_offset), ($nowStamp + $lm_time_offset));
+	$rewritereplace = lm_get_fuzzy_replacements($postStamp, $nowStamp, $lm_time_offset);
 
 	$outString = str_replace($rewritecode, $rewritereplace, $lm_fdt_options[$fuzzyMode]);
 	
@@ -117,8 +117,12 @@ function splees_fuzzy_datetime() {
 	$postStamp: This should be the timestamp of the post
 	$nowStamp: This should be the timestamp for now()
 */
-function lm_get_fuzzy_replacements($postStamp, $nowStamp) {
+function lm_get_fuzzy_replacements($postStamp, $nowStamp, $lm_time_offset) {
 	$difference = ($nowStamp - $postStamp);
+	//Now the delta has been calculated, go with the blog's local time
+	$postStamp = $postStamp + $lm_time_offset;
+	$nowStamp = $nowStamp + $lm_time_offset;
+	
 	/*	Must return an array with the results in the following order:
 	
 		"%minutesSince%",
